@@ -1,0 +1,53 @@
+---
+title: "COMP4441_final project"
+author: "Abigail Ward"
+date: "8/2/2021"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+required_packages <- c('MASS', 'rcompanion', 'lsr', 'vcd', 'DescTools')
+for (p in required_packages) {
+  if(!require(p,character.only = TRUE)) {
+    install.packages(p, dep = TRUE)
+  }
+}
+```
+
+Initial exploration of the data
+
+```{r}
+dat<-read.csv("policeshooting.csv")
+
+countState <- table(dat$state)
+barplot(countState, main="State Distribution",
+        xlab="Number of police shootings")
+
+countDate <- table(dat$date)
+barplot(countDate, main="Date Distribution",
+        xlab="Number of police shootings")
+
+countAge <- table(dat$age)
+barplot(countAge, main="Age Distribution",
+        xlab="Number of police shootings")
+
+countArmed <- table(dat$armed)
+barplot(countArmed, main="Armed Distribution",
+        xlab="Number of police shootings")
+gun<-("gun")
+unarmed<-("unarmed")
+dat$group <- with(dat, ifelse(armed %in% gun, "gun",
+                            ifelse(armed %in% unarmed, "unarmed", "other" )))
+countArmed.grouped <- table(dat$group)
+barplot(countArmed.grouped, main="Armed Distribution",
+        xlab="Number of police shootings")
+```
+
