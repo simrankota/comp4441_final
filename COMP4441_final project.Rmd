@@ -1,6 +1,6 @@
 ---
 title: "COMP4441_final project"
-author: "Abigail Ward"
+author: "Abigail Ward, Simran Kota"
 date: "8/2/2021"
 output:
   word_document: default
@@ -25,8 +25,21 @@ for (p in required_packages) {
 Initial exploration of the data
 
 ```{r}
-dat<-read.csv("policeshooting.csv")
+dat<-read.csv("fatal-police-shootings-data.csv")
+dat$date <- as.Date(dat$date)
+```
 
+The initial data set has ``nrow(dat)`` observations of ``ncol(dat)`` features. However, there are a number of null values present in the data.
+
+``` {r}
+dat <- dat %>% na_if("") %>% na.omit
+```
+
+After removing the nulls and empty strings, we have ``nrow(dat)`` observations of ``ncol(dat)`` features.
+
+### Exploratory Data Analysis
+
+``` {r}
 countState <- table(dat$state)
 barplot(countState, main="State Distribution",
         xlab="Number of police shootings")
@@ -45,9 +58,44 @@ barplot(countArmed, main="Armed Distribution",
 gun<-("gun")
 unarmed<-("unarmed")
 dat$group <- with(dat, ifelse(armed %in% gun, "gun",
-                            ifelse(armed %in% unarmed, "unarmed", "other" )))
+                            ifelse(armed %in% unarmed, "unarmed", 
+                                   ifelse(armed %in% ("undetermined"), 
+                                          "undetermined", "other" ))))
 countArmed.grouped <- table(dat$group)
-barplot(countArmed.grouped, main="Armed Distribution",
+barplot(countArmed.grouped, main="Armed Distribution (Modified)",
+        xlab="Number of police shootings")
+
+countRace <- table(dat$race)
+barplot(countRace, main="Race Distribution",
         xlab="Number of police shootings")
 ```
 
+``` {r}
+ggplot(dat, aes(x=date, color=race)) + geom_freqpoly(binwidth=50) + 
+  labs(title="Shootings Over Time by Race")
+```
+We will create 5000 samples of the general population in the US based on 2019 Census data regarding on racial proportions. The probability of getting fatally shot is 1/315.
+``` {r}
+gen_samp <- function() {
+  gen_pop <- data.frame(id=1:5000, race=sample(unique(dat$race)[0:5],500000, replace=TRUE, prob = c(0.059, 0.601, 0.185, 0.134, 0.028)))
+  gen_pop$shot <- sample(c(0, 1), 5000, replace=TRUE, prob = c(314/315, 1/315))
+  gen_pop <- gen_pop[gen_pop$shot == 1,]
+  gen_pop <- gen_pop %>% count(race)
+  return (gen_pop$n)
+}
+
+mat <- matrix(rep(NA, 5000), ncol=5)
+for (i in 1:1000) {
+  mat[i,] = gen_samp()
+}
+mat <- data.frame(mat)
+colnames(mat) <- gen_pop$race
+```
+
+We will then test the hypothesis that the number of fatal shootings for a given race, on average, is equal to the observed number of fatal shootings under the assumption that all races are equally likely to be a victim of a fatal shooting.
+``` {r}
+obs.val <- dat %>% count(race)
+race <- 'B'
+mean <- obs.val[obs.val$race == race,2]
+t.test(mat$B, mu=mean)
+```
