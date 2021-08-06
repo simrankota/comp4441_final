@@ -104,6 +104,9 @@ for (i in 1:1000) {
 }
 mat <- data.frame(mat)
 colnames(mat) <- gen_pop$race
+ggqqplot(mat$B)
+hist(mat$B)
+mat$total <- apply(mat, 1, sum)
 ```
 
 We will then test the hypothesis that the number of fatal shootings for a given race, on average, is equal to the observed number of fatal shootings under the assumption that all races are equally likely to be a victim of a fatal shooting.
@@ -111,10 +114,26 @@ We will then test the hypothesis that the number of fatal shootings for a given 
 obs.val <- dat %>% count(race)
 race <- 'B'
 mean <- obs.val[obs.val$race == race,2]
-t.test(mat$B, mu=mean)
+t.test(mat$B / mat$total, mu=mean / sum(obs.val$n))
 ```
 
+``` {r}
+race <- 'W'
+mean <- obs.val[obs.val$race == race,2]
+t.test(mat$W / mat$total, mu=mean / sum(obs.val$n))
+```
 
+``` {r}
+race <- 'A'
+mean <- obs.val[obs.val$race == race,2]
+t.test(mat$A / mat$total, mu=mean / sum(obs.val$n))
+```
+
+``` {r}
+race <- 'H'
+mean <- obs.val[obs.val$race == race,2]
+t.test(mat$H / mat$total, mu=mean / sum(obs.val$n))
+```
 
 Chi squared analysis or the fisher test will be implemented to assess if there is a significant association between two characteristics of people fatally shot by the police. The null hypothesis for all assessments is that the two characteristics are independent. 
 Gender and mental illness chi squared testing:
@@ -174,5 +193,40 @@ balloonplot(t(race_mental), main ="race and signs of mental illness", xlab ="", 
 fisher.test(race_mental, simulate.p.value=TRUE)
 ```
 
+```{r}
+by_year <- data.frame(year=2015:2021)
+by_year$A <- (dat[dat$race == "A",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
+by_year$B <- (dat[dat$race == "B",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
+by_year$W <- (dat[dat$race == "W",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
+by_year$H <- (dat[dat$race == "H",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
+O <- (dat[dat$race == "O",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
+O[7] <- 0
+by_year$O <- O
+by_year$N <- (dat[dat$race == "N",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
+by_year$total <- apply(by_year[,2:7], 1, sum)
+by_year
+```
+
+``` {r}
+by_long <- by_year %>% 
+  gather(race, total, -year)
+ggplot(data=by_long, aes(x=year, y=total, color=race)) + geom_line()
+```
+
+``` {r}
+for (i in 2:7) {
+  print(ggqqplot(by_year[,i]))
+}
+t.test(by_year$W - by_year$B)
+t.test(by_year$total - by_year$W)
+t.test(by_year$B - by_year$H)
+
+by_long$group <- with(by_long, ifelse(race %in% "W", "W", "C"))
+t.test(data = by_long, total ~ group)
+```
 
 
+``` {r}
+illness <- dat %>% mutate(year=format(date, "%Y")) %>% group_by(year, signs_of_mental_illness) %>% count()
+t.test(data=illness, n ~ signs_of_mental_illness)
+```
