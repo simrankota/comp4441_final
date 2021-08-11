@@ -24,7 +24,11 @@ library("graphics")
 library("gplots")
 ```
 
-Initial exploration of the data
+This data comes from The Washington Post (https://bit.io/bitdotio/police_shooting/). The records were collected via local news reports, law enforcement websites, social media, and independent databases such as Killed by Police and Fatal Encounters. This list is continually updated with additional records and new information of prrevious cases. The FBI and the Centers for Disease Control and Prevention also logged fatal shootings by police, but had an incomplete list. 
+Each record represents a civilian in the United stated who was shot and killed by a police officer in the line of duty from 2015 to 2021. Not included in this data set are deaths of people in police custody, fatal shootings by off-duty officers, and non-shooting deaths. The records include details about each individual such as race, gender, age, location, signs of mental illness, etc. 
+
+
+Initial exploration of the data:
 
 ```{r}
 dat<-read.csv("fatal-police-shootings-data.csv")
@@ -71,23 +75,28 @@ countRace <- table(dat$race)
 barplot(countRace, main="Race Distribution",
         xlab="Number of police shootings")
 ```
-#### Findings:
+####Findings:
 - The age variable appears to be approximately Normally distributed, but skewed to the left.
 - There are too many individual values in the armed variable to conduct a meaningful analysis. To make the values more meaningful, we constructed four categories to sort the values into: gun, other, unarmed, and undetermined.
 - It appears that there are significantly more Caucasian people represented in the data than any other race.
 
+##Goal
+The goal of this analysis is to assess the significance various factors such as age, race, mental illness and gender have on the population of civilians in the United States who have been fatally shot by the police. 
+
+##Time Series 
 
 The one letter abbreviations for race are as follows:
-A Asian
-B Black or African American
-H Hispanic
-N American Native or Alaskan Native 
-O Unknown/Other
+A Asian,
+B Black or African American,
+H Hispanic,
+N American Native or Alaskan Native, 
+O Unknown/Other/Two ore more, 
 W White
 ``` {r}
 ggplot(dat, aes(x=date, color=race)) + geom_freqpoly(binwidth=50) + 
   labs(title="Shootings Over Time by Race")
 ```
+
 There does not appear to be any specific trend over time in the number of people who are fatally shot.
 
 ## Statistical Model
@@ -95,11 +104,11 @@ There does not appear to be any specific trend over time in the number of people
 We will investigate whether number of people that are fatally shot for a given attribute in our data is consistent with a population in which each person, regardless of said attribute, is equally likely to be fatally shot. To do this, we will create 1000 samples of the general population in the US based on 2019 Census data regarding on racial proportions from https://www.census.gov/quickfacts/fact/table/US/PST045219.  The probability of getting fatally shot regardless of race is 1/315.
 
 The racial proportions are:
-A Asian 5.9%
-B Black or African American 13.4%
-H Hispanic 18.5%
-N American Native or Alaskan Native 1.3%
-O Unknown/Other/Two or more races 2.8%
+A Asian 5.9%, 
+B Black or African American 13.4%, 
+H Hispanic 18.5%, 
+N American Native or Alaskan Native 1.3%, 
+O Unknown/Other/Two or more races 2.8%, 
 W White 60.1%
 ``` {r}
 gen_samp <- function() {
@@ -212,7 +221,7 @@ fisher.test(gender_age, simulate.p.value=TRUE)
 ```
 
 
-race and mental illness:
+Race and Mental Illness:
 As shown previously, race and gender have a statistically significant relationship, we also wanted to see if there is a relationship between race and signs of mental illness. The fisher test was implemented and resulted in a p-value = 0.0004998. We reject the null hypothesis that the two factors are independent. 
 
 ``` {r}
@@ -224,8 +233,9 @@ balloonplot(t(race_mental), main ="race and signs of mental illness", xlab ="", 
 
 fisher.test(race_mental, simulate.p.value=TRUE)
 ```
-race and age:
-Using the fisher test to assess the significance of the relationship between race and age, we found a p-value of 0.0004998 meaning the two factors are not independent. 
+Race and Age:
+Using the fisher test to assess the significance of the relationship between race and age, we found a p-value of 0.0004998 meaning the two factors are not independent. This indicates that the age a civilian in shot fatally by the police is dependent on their race. 
+
 
 ``` {r}
 race_age<-table( dat$race,dat$ageGroup)
