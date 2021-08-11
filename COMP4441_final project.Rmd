@@ -115,7 +115,7 @@ for (i in 1:1000) {
   mat[i,] = gen_samp()
 }
 mat <- data.frame(mat)
-colnames(mat) <- gen_pop$race
+colnames(mat) <- c("A", "B", "H", "O", "W")
 ggqqplot(mat$B)
 hist(mat$B)
 mat$total <- apply(mat, 1, sum)
