@@ -22,6 +22,9 @@ for (p in required_packages) {
 }
 library("graphics")
 library("gplots")
+require(foreign)
+require(nnet)
+require(reshape2)
 ```
 
 This data comes from The Washington Post (https://bit.io/bitdotio/police_shooting/). The records were collected via local news reports, law enforcement websites, social media, and independent databases such as Killed by Police and Fatal Encounters. This list is continually updated with additional records and new information of prrevious cases. The FBI and the Centers for Disease Control and Prevention also logged fatal shootings by police, but had an incomplete list. 
@@ -245,6 +248,50 @@ balloonplot(t(race_age), main ="race and age", xlab ="", ylab="",
             label = FALSE, show.margins = FALSE)
 
 fisher.test(race_age, simulate.p.value=TRUE)
+```
+
+
+##Logistic regression
+The state and race variables are both categorical and with a p-value of 0.0004998 from the fisher test, these two variables are dependent on each other. Therefore , we used repeated measures logistic regression to 
+The final negative log-likelihood is final value 5394.922383 
+``` {r}
+pacific<-c('WA','OR','CA')
+rocky_mtn<-c('MT', 'ID', 'WY', 'NV', 'UT', 'CO')
+southwest<-c('AZ', 'NM', 'TX', 'OK')
+midwest<-c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'MI', 'OH', 'IN')
+southwest<-c('AR', 'LA', 'MS', 'TN', 'AL', 'GA', 'FL', 'KY', 'WV', 'DE', 'MD', 'NC', 'SC', 'VA')
+noncontiguous<-c('AK','HI')
+dat$region <- with(dat, ifelse(state %in% pacific, "pacific",
+                            ifelse(state %in% rocky_mtn, "rocky_mtn", 
+                             ifelse(state %in% southwest, "southwest",
+                              ifelse(state %in% midwest, "midwest",
+                                ifelse(state %in% southwest, "southwest",
+                                 ifelse(state %in% noncontiguous, "noncontinuous",
+                                  "northeast" )))))))
+
+
+with(dat, table(dat$region, dat$race))
+race_state<-table(dat$region, dat$race)
+fisher.test(race_state, simulate.p.value=TRUE)
+
+
+test <- multinom(race ~ region, data = dat)
+##summary
+summary(test)
+
+z <- summary(test)$coefficients/summary(test)$standard.errors
+##z score
+z
+
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+##p-value
+p
+
+##coefficients
+exp(coef(test))
+
+pp <- fitted(test)
+
 ```
 
 ## Two-Sample Tests
