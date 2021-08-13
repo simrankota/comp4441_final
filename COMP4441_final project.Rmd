@@ -22,7 +22,13 @@ for (p in required_packages) {
 }
 library("graphics")
 library("gplots")
-library("nnet")
+require(foreign)
+require(nnet)
+require(reshape2)
+library(caret)
+library(plyr)
+library(Rfast2)
+library(dplyr)
 ```
 
 This data comes from The Washington Post (https://bit.io/bitdotio/police_shooting/). The records were collected via local news reports, law enforcement websites, social media, and independent databases such as Killed by Police and Fatal Encounters. This list is continually updated with additional records and new information of prrevious cases. The FBI and the Centers for Disease Control and Prevention also logged fatal shootings by police, but had an incomplete list. 
@@ -50,15 +56,12 @@ After removing the nulls and empty strings, we have ``nrow(dat)`` observations o
 countState <- table(dat$state)
 barplot(countState, main="State Distribution",
         xlab="Number of police shootings")
-
 countDate <- table(dat$date)
 barplot(countDate, main="Date Distribution",
         xlab="Number of police shootings")
-
 countAge <- table(dat$age)
 barplot(countAge, main="Age Distribution",
         xlab="Number of police shootings")
-
 countArmed <- table(dat$armed)
 barplot(countArmed, main="Armed Distribution",
         xlab="Number of police shootings")
@@ -71,7 +74,6 @@ dat$group <- with(dat, ifelse(armed %in% gun, "gun",
 countArmed.grouped <- table(dat$group)
 barplot(countArmed.grouped, main="Armed Distribution (Modified)",
         xlab="Number of police shootings")
-
 countRace <- table(dat$race)
 barplot(countRace, main="Race Distribution",
         xlab="Number of police shootings")
@@ -119,7 +121,6 @@ gen_samp <- function() {
   gen_pop <- gen_pop %>% count(race)
   return (gen_pop$n)
 }
-
 mat <- matrix(rep(NA, 5000), ncol=5)
 for (i in 1:1000) {
   mat[i,] = gen_samp()
@@ -191,7 +192,6 @@ gender_race<-table( dat$race,dat$gender)
 gender_race
 balloonplot(t(gender_race), main ="gender and race", xlab ="", ylab="",
             label = FALSE, show.margins = FALSE)
-
 fisher.test(gender_race, simulate.p.value=TRUE)
 ```
 
@@ -210,14 +210,11 @@ dat$ageGroup <- with(dat, ifelse(age %in% under_18, "under 18",
                              ifelse(age %in% a30_44, "30-44",
                               ifelse(age %in% a45_59, "45-59",
                                   "60 and older" )))))
-
                                           
 gender_age<-table( dat$ageGroup,dat$gender)
 gender_age
-
 balloonplot(t(gender_age), main ="gender and age", xlab ="", ylab="",
             label = FALSE, show.margins = FALSE)
-
 fisher.test(gender_age, simulate.p.value=TRUE)
 ```
 
@@ -228,10 +225,8 @@ As shown previously, race and gender have a statistically significant relationsh
 ``` {r}
 race_mental<-table( dat$race,dat$signs_of_mental_illness)
 race_mental
-
 balloonplot(t(race_mental), main ="race and signs of mental illness", xlab ="", ylab="",
             label = FALSE, show.margins = FALSE)
-
 fisher.test(race_mental, simulate.p.value=TRUE)
 ```
 Race and Age:
@@ -241,12 +236,11 @@ Using the fisher test to assess the significance of the relationship between rac
 ``` {r}
 race_age<-table( dat$race,dat$ageGroup)
 race_age
-
 balloonplot(t(race_age), main ="race and age", xlab ="", ylab="",
             label = FALSE, show.margins = FALSE)
-
 fisher.test(race_age, simulate.p.value=TRUE)
 ```
+
 
 ##Logistic regression
 We used multinomial logistic regression to predict the race based on 4 variables. The predicted variable race is both categorical and with more than two possible outcomes. The independent variables are gender (M/F), signs_of_mental_illness (True/False),body_camera (True/False), and side of the United States (West/East) all of which are dichotomous.
@@ -291,6 +285,7 @@ test$RacePredicted <- predict(multinom_model, newdata = test, "class")
 tab1 <- table(test$Race, test$RacePredicted)
 tab1
 ```
+
 
 ## Two-Sample Tests
 
@@ -339,7 +334,3 @@ t.test(data=illness, n ~ signs_of_mental_illness)
 ```
 
 In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, it is worth noting that the mean of the group with Mental Illness is far lower than the mean of the group without, indicating that signs of mental illness do not necessarily make a person more likely to be fatally shot.
-
-
-
-
