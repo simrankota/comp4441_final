@@ -46,9 +46,10 @@ The initial data set has ``nrow(dat)`` observations of ``ncol(dat)`` features. H
 
 ``` {r}
 dat <- dat %>% na_if("") %>% na.omit
+dat <- dat[dat$date < as.Date('2021-01-01'),]
 ```
 
-After removing the nulls and empty strings, we have ``nrow(dat)`` observations of ``ncol(dat)`` features.
+After removing the nulls and empty strings, we have ``nrow(dat)`` observations of ``ncol(dat)`` features. We also drop the data for 2021 because it is incomplete and skews our results.
 
 ### Exploratory Data Analysis
 
@@ -275,6 +276,8 @@ exp(coef(multinom_model))
 head(round(fitted(multinom_model), 2))
 #Validating
 train$RacePredicted <- predict(multinom_model, newdata = train, "class")
+train <- within(train, RacePredicted <- as.factor(RacePredicted))
+train <- within(train, RacePredicted <- relevel(RacePredicted, ref = "W"))
 # Building classification table
 tab <- table(train$race, train$RacePredicted)
 # Calculating accuracy - sum of diagonal elements divided by total obs
@@ -293,16 +296,13 @@ We will now attempt to examine whether there is a significant difference between
 
 Here we construct a data frame based on the original data that shows the total number of shootings per year by race.
 ```{r}
-by_year <- data.frame(year=2015:2021)
-by_year$A <- (dat[dat$race == "A",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
-by_year$B <- (dat[dat$race == "B",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
-by_year$W <- (dat[dat$race == "W",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
-by_year$H <- (dat[dat$race == "H",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
-O <- (dat[dat$race == "O",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
-O[7] <- 0
-by_year$O <- O
-by_year$N <- (dat[dat$race == "N",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% count())$n
-by_year$total <- apply(by_year[,2:7], 1, sum)
+by_year <- data.frame(year=2015:2020)
+by_year$A <- (dat[dat$race == "A",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
+by_year$B <- (dat[dat$race == "B",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
+by_year$W <- (dat[dat$race == "W",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
+by_year$H <- (dat[dat$race == "H",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
+by_year$N <- (dat[dat$race == "N",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
+by_year$total <- apply(by_year[,2:6], 1, sum)
 by_year
 ```
 
@@ -315,7 +315,7 @@ ggplot(data=by_long, aes(x=year, y=total, color=race)) + geom_line()
 
 We will now verify that the data for each race is normally distributed in order to conduct a two-sample T-test between various races.
 ``` {r}
-for (i in 2:7) {
+for (i in 2:6) {
   print(ggqqplot(by_year[,i]))
 }
 ```
@@ -329,8 +329,22 @@ t.test(by_year$B - by_year$H)
 The t-tests indicate that the data for each race cannot be considered to be iid samples, and that there is a significant difference between the distributions of each race.
 
 ``` {r}
-illness <- dat %>% mutate(year=format(date, "%Y")) %>% group_by(year, signs_of_mental_illness) %>% count()
+illness <- dat %>% mutate(year=format(date, "%Y")) %>% 
+  group_by(year, signs_of_mental_illness) %>% tally()
 t.test(data=illness, n ~ signs_of_mental_illness)
 ```
 
-In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, it is worth noting that the mean of the group with Mental Illness is far lower than the mean of the group without, indicating that signs of mental illness do not necessarily make a person more likely to be fatally shot.
+In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, ``round(sum(illness[illness$signs_of_mental_illness == "True", 3])/sum(illness$n) * 100, 2)``% of the data population had signs of mental illness, while only ~20.6% of adults in the US experienced mental illness in 2019 (according to the [National Alliance on Mental Illness](https://www.nami.org/mhstats#:~:text=20.6%25%20of%20U.S.%20adults%20experienced,represents%201%20in%2020%20adults.)). We can conduct a t-test to examine whether this difference is statistically significant.
+
+``` {r}
+props <- data.frame(year=2015:2020, n=illness[illness$signs_of_mental_illness == "True", 3])
+illness$year <- as.integer(illness$year)
+tot.pop <- aggregate(x = illness$n, by=list(illness$year), FUN=sum)
+colnames(tot.pop) <- c("year", "n")
+tot.pop$prop <- props$n / tot.pop$n
+
+t.test(tot.pop$prop, mu=0.206)
+```
+
+By conducting a one sample t-test between the observed proportions of mental illness in the population and the actual proportion of mental illness in US adults, we see that the difference is statistically significant. We have strong evidence to reject the null hypothesis, showing that although there are more people who are fatally shot that don't have signs of mental illness, there is a higher chance of someone being fatally shot if they do show signs of mental illness.
+
