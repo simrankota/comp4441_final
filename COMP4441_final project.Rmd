@@ -22,6 +22,7 @@ for (p in required_packages) {
 }
 library("graphics")
 library("gplots")
+library("nnet")
 ```
 
 This data comes from The Washington Post (https://bit.io/bitdotio/police_shooting/). The records were collected via local news reports, law enforcement websites, social media, and independent databases such as Killed by Police and Fatal Encounters. This list is continually updated with additional records and new information of prrevious cases. The FBI and the Centers for Disease Control and Prevention also logged fatal shootings by police, but had an incomplete list. 
@@ -247,6 +248,50 @@ balloonplot(t(race_age), main ="race and age", xlab ="", ylab="",
 fisher.test(race_age, simulate.p.value=TRUE)
 ```
 
+##Logistic regression
+We used multinomial logistic regression to predict the race based on 4 variables. The predicted variable race is both categorical and with more than two possible outcomes. The independent variables are gender (M/F), signs_of_mental_illness (True/False),body_camera (True/False), and side of the United States (West/East) all of which are dichotomous.
+
+ We set the reference level to race="W" and trained the model with 70% of the original data set. The accuracy of this model is 1.89 which is impossible. The final negative log-likelihood is 5394.922383 which is fairly high indicating the model is performing badly. 
+
+
+``` {r}
+west<-c('WA','OR','CA', 'MT', 'ID', 'WY', 'NV', 'UT', 'CO', 'AZ', 'NM', 'AK','HI')
+dat$side <- with(dat, ifelse(state %in% west, "west", "east" ))
+with(dat, table(dat$side, dat$race))
+race_side<-table(dat$side, dat$race)
+fisher.test(race_side, simulate.p.value=TRUE)
+with(dat, table(dat$body_camera, dat$race))
+race_camera<-table(dat$body_camera, dat$race)
+fisher.test(race_camera, simulate.p.value=TRUE)
+```
+
+
+``` {r}
+#Race and other factors
+dat_model<-with(dat, data.frame(race, gender, signs_of_mental_illness,body_camera, side))
+index <- createDataPartition(dat_model$race, p = .70, list = FALSE)
+train <- dat_model[index,]
+test <- dat_model[-index,]
+train <- within(train, race <- as.factor(race))
+train <- within(train, race <- relevel(race, ref = "W"))
+#Training
+multinom_model <- multinom(race ~ ., data = dat_model)
+summary(multinom_model)
+exp(coef(multinom_model))
+head(round(fitted(multinom_model), 2))
+#Validating
+train$RacePredicted <- predict(multinom_model, newdata = train, "class")
+# Building classification table
+tab <- table(train$race, train$RacePredicted)
+# Calculating accuracy - sum of diagonal elements divided by total obs
+round((sum(diag(tab))/sum(tab))*100,2)
+#Predicting
+test$RacePredicted <- predict(multinom_model, newdata = test, "class")
+# Building classification table
+tab1 <- table(test$Race, test$RacePredicted)
+tab1
+```
+
 ## Two-Sample Tests
 
 We will now attempt to examine whether there is a significant difference between the observed number of shootings for various values of the features.
@@ -294,4 +339,7 @@ t.test(data=illness, n ~ signs_of_mental_illness)
 ```
 
 In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, it is worth noting that the mean of the group with Mental Illness is far lower than the mean of the group without, indicating that signs of mental illness do not necessarily make a person more likely to be fatally shot.
+
+
+
 
