@@ -3,10 +3,10 @@ title: "COMP4441_final project"
 author: "Abigail Ward, Simran Kota"
 date: "8/2/2021"
 output:
-  word_document: default
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -110,11 +110,16 @@ We will now attempt to examine whether there is a significant difference between
 Here we construct a data frame based on the original data that shows the total number of shootings per year by race.
 ```{r}
 by_year <- data.frame(year=2015:2020)
-by_year$A <- (dat[dat$race == "A",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
-by_year$B <- (dat[dat$race == "B",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
-by_year$W <- (dat[dat$race == "W",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
-by_year$H <- (dat[dat$race == "H",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
-by_year$N <- (dat[dat$race == "N",] %>% mutate(year=format(date, "%Y")) %>% group_by(year) %>% tally())$n
+by_year$A <- (dat[dat$race == "A",] %>% mutate(year=format(date, "%Y")) %>% 
+                group_by(year) %>% tally())$n
+by_year$B <- (dat[dat$race == "B",] %>% mutate(year=format(date, "%Y")) %>% 
+                group_by(year) %>% tally())$n
+by_year$W <- (dat[dat$race == "W",] %>% mutate(year=format(date, "%Y")) %>% 
+                group_by(year) %>% tally())$n
+by_year$H <- (dat[dat$race == "H",] %>% mutate(year=format(date, "%Y")) %>% 
+                group_by(year) %>% tally())$n
+by_year$N <- (dat[dat$race == "N",] %>% mutate(year=format(date, "%Y")) %>% 
+                group_by(year) %>% tally())$n
 by_year$total <- apply(by_year[,2:6], 1, sum)
 by_year
 ```
@@ -147,10 +152,11 @@ illness <- dat %>% mutate(year=format(date, "%Y")) %>%
 t.test(data=illness, n ~ signs_of_mental_illness)
 ```
 
-In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, ``round(sum(illness[illness$signs_of_mental_illness == "True", 3])/sum(illness$n) * 100, 2)``% of the data population had signs of mental illness, while only ~20.6% of adults in the US experienced mental illness in 2019 (according to the [National Alliance on Mental Illness](https://www.nami.org/mhstats#:~:text=20.6%25%20of%20U.S.%20adults%20experienced,represents%201%20in%2020%20adults.)). We can conduct a t-test to examine whether this difference is statistically significant.
+In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, ``r round(sum(illness[illness$signs_of_mental_illness == "True", 3])/sum(illness$n) * 100, 2)``% of the data population had signs of mental illness, while only ~20.6% of adults in the US experienced mental illness in 2019 (according to the [National Alliance on Mental Illness](https://www.nami.org/mhstats#:~:text=20.6%25%20of%20U.S.%20adults%20experienced,represents%201%20in%2020%20adults.)). We can conduct a t-test to examine whether this difference is statistically significant.
 
 ``` {r}
-props <- data.frame(year=2015:2020, n=illness[illness$signs_of_mental_illness == "True", 3])
+props <- data.frame(year=2015:2020, 
+                    n=illness[illness$signs_of_mental_illness == "True", 3])
 illness$year <- as.integer(illness$year)
 tot.pop <- aggregate(x = illness$n, by=list(illness$year), FUN=sum)
 colnames(tot.pop) <- c("year", "n")
@@ -174,11 +180,15 @@ H Hispanic 18.5%,
 N American Native or Alaskan Native 1.3%, 
 O Unknown/Other/Two or more races 2.8%, 
 W White 60.1%
-``` {r}
+``` {r cache=TRUE}
 set.seed(1234)
 gen_samp <- function() {
-  gen_pop <- data.frame(id=1:5000, race=sample(unique(dat$race)[1:6],500000, replace=TRUE, prob = c(0.059, 0.601, 0.185, 0.134, 0.028, 0.013)))
-  gen_pop$shot <- sample(c(0, 1), 500000, replace=TRUE, prob = c(314/315, 1/315))
+  gen_pop <- data.frame(id=1:5000, race=sample(unique(dat$race)[1:6],500000, 
+                                               replace=TRUE,
+                                               prob = c(0.059, 0.601, 0.185, 
+                                                        0.134, 0.028, 0.013)))
+  gen_pop$shot <- sample(c(0, 1), 500000, replace=TRUE, 
+                         prob = c(314/315, 1/315))
   gen_pop <- gen_pop[gen_pop$shot == 1,]
   gen_pop <- gen_pop %>% group_by(race) %>% tally()
   return (gen_pop$n)
@@ -257,8 +267,8 @@ Here we assessed the independence of the gender and signs of mental illness of p
 ``` {r}
 gender_mental <- table(dat$gender, dat$signs_of_mental_illness)
 gender_mental
-balloonplot(t(gender_mental), main ="gender and mental illness", xlab ="", ylab="",
-            label = FALSE, show.margins = FALSE)
+balloonplot(t(gender_mental), main ="gender and mental illness", xlab ="", 
+            ylab="", label = FALSE, show.margins = FALSE)
 chisq.test(dat$gender, dat$signs_of_mental_illness)
 ```
 
@@ -305,8 +315,8 @@ As shown previously, race and gender have a statistically significant relationsh
 ``` {r}
 race_mental<-table( dat$race,dat$signs_of_mental_illness)
 race_mental
-balloonplot(t(race_mental), main ="race and signs of mental illness", xlab ="", ylab="",
-            label = FALSE, show.margins = FALSE)
+balloonplot(t(race_mental), main ="race and signs of mental illness", xlab ="", 
+            ylab="", label = FALSE, show.margins = FALSE)
 fisher.test(race_mental, simulate.p.value=TRUE)
 ```
 Race and Age:
@@ -329,7 +339,8 @@ We used multinomial logistic regression to predict the race based on 4 variables
 
 
 ``` {r}
-west<-c('WA','OR','CA', 'MT', 'ID', 'WY', 'NV', 'UT', 'CO', 'AZ', 'NM', 'AK','HI')
+west<-c('WA','OR','CA', 'MT', 'ID', 'WY', 'NV', 'UT', 'CO', 'AZ', 'NM', 'AK',
+        'HI')
 dat$side <- with(dat, ifelse(state %in% west, "west", "east" ))
 with(dat, table(dat$side, dat$race))
 race_side<-table(dat$side, dat$race)
@@ -342,7 +353,8 @@ fisher.test(race_camera, simulate.p.value=TRUE)
 
 ``` {r}
 #Race and other factors
-dat_model<-with(dat, data.frame(race, gender, signs_of_mental_illness,body_camera, side))
+dat_model<-with(dat, data.frame(race, gender, signs_of_mental_illness,
+                                body_camera, side))
 index <- createDataPartition(dat_model$race, p = .70, list = FALSE)
 train <- dat_model[index,]
 test <- dat_model[-index,]
