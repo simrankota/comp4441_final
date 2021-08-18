@@ -341,7 +341,7 @@ fisher.test(race_age, simulate.p.value=TRUE)
 ##Logistic regression
 We used multinomial logistic regression to predict the race based on 4 variables. The predicted variable race is both categorical and with more than two possible outcomes. The independent variables are gender (M/F), signs_of_mental_illness (True/False),body_camera (True/False), and side of the United States (West/East) all of which are dichotomous.
 
- We set the reference level to race="W" and trained the model with 70% of the original data set. The accuracy of this model is 1.89 which is impossible. The final negative log-likelihood is 5394.922383 which is fairly high indicating the model is performing badly. 
+ We set the reference level to race="W" and trained the model with 70% of the original data set. The accuracy of this model is 52.1% which the number of classifications a model correctly predicts divided by the total number of predictions made. The final negative log-likelihood is 5394.922383 which is fairly high indicating the model is performing badly. The model performance indicates that there are likely additional or different factors in a situation which better predict the race of the person shot and killed by the police. 
 
 
 ``` {r}
@@ -369,7 +369,9 @@ train <- within(train, race <- relevel(race, ref = "W"))
 #Training
 multinom_model <- multinom(race ~ ., data = dat_model)
 summary(multinom_model)
+#exponent of the coefficients from our model to see these risk ratios.
 exp(coef(multinom_model))
+#predicted probabilities for each of our outcome levels
 head(round(fitted(multinom_model), 2))
 #Validating
 train$RacePredicted <- predict(multinom_model, newdata = train, "class")
@@ -385,3 +387,6 @@ test$RacePredicted <- predict(multinom_model, newdata = test, "class")
 tab1 <- table(test$Race, test$RacePredicted)
 tab1
 ```
+
+
+
