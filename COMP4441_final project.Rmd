@@ -388,5 +388,16 @@ tab1 <- table(test$Race, test$RacePredicted)
 tab1
 ```
 
+## Conclusion
+
+The time series analysis shows that there are not any any specific trend over time in the number of people of each race who are fatally shot by the police. 
+
+Using two-sample tests, we found that the data for each race cannot be considered iid and the distribution for each race is significantly different. We also found that there is a statistically significant difference between the group with mental illness and the group without mental illness. There is a statistically significant difference in the observed proportions of mental illness in the data and the actual proportion of mental illness in US adults. 
+
+By creating a statistical model based on census data and the probability of being fatally shot, we found that the percentage of African-Americans who are fatally shot is significantly higher than it would if all races were equally likely. We also found that the percentage of Caucasians and the percentage of Asians who are fatally shot is significantly lower than expected if all races were equally likely. For the Hispanic population and the Native American population, the percentage is almost consistent with the case where all races are equally likely to be fatally shot.
+
+We used the chi squared test and the fisher test to assess the independence of a few of the factors in the data set. We found that gender and mental illness, gender and race, race and mental illness, and race and age are all independent. We also found that gender and age are not independent and there is a significant association between two characteristics. 
+
+Using a multinomial logistic regression, we attempted to predict the race of a person based on the gender, signs of mental illness, body camera presence, and side of the United Stated the shooting occurred. The model was inaccurate and performed poorly indicating that there are additional factors or the factors we selected were not as important as we had hypothesized. 
 
 
