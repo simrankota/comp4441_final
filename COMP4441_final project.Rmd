@@ -79,7 +79,9 @@ countRace <- table(dat$race)
 barplot(countRace, main="Race Distribution",
         xlab="Number of police shootings")
 ```
-### Findings:
+
+## Findings
+
 - The age variable appears to be approximately Normally distributed, but skewed to the left.
 - There are too many individual values in the armed variable to conduct a meaningful analysis. To make the values more meaningful, we constructed four categories to sort the values into: gun, other, unarmed, and undetermined.
 - It appears that there are significantly more Caucasian people represented in the data than any other race.
@@ -158,7 +160,7 @@ illness <- dat %>% mutate(year=format(date, "%Y")) %>%
 t.test(data=illness, n ~ signs_of_mental_illness)
 ```
 
-In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, ``r round(sum(illness[illness$signs_of_mental_illness == "True", 3])/sum(illness$n) * 100, 2)``% of the data population had signs of mental illness, while only ~20.6% of adults in the US experienced mental illness in 2019 (according to the [https://www.nami.org/mhstats#:~:text=20.6%25%20of%20U.S.%20adults%20experienced,represents%201%20in%2020%20adults](National Alliance on Mental Illness)). We can conduct a t-test to examine whether this difference is statistically significant.
+In a two sample t-test where we look at the differences between the group with Mental Illness and the group without, we also see a statistically significant difference. However, ``r round(sum(illness[illness$signs_of_mental_illness == "True", 3])/sum(illness$n) * 100, 2)``% of the data population had signs of mental illness, while only ~20.6% of adults in the US experienced mental illness in 2019 (according to the [National Alliance on Mental Illness](https://www.nami.org/mhstats#:~:text=20.6%25%20of%20U.S.%20adults%20experienced,represents%201%20in%2020%20adults)). We can conduct a t-test to examine whether this difference is statistically significant.
 
 ``` {r}
 props <- data.frame(year=2015:2020, 
@@ -177,7 +179,7 @@ By conducting a one sample t-test between the observed proportions of mental ill
 
 ## Statistical Model
 
-We will investigate whether the number of people that are fatally shot for a given race in our data is consistent with a population in which each person, regardless of race, is equally likely to be fatally shot. To do this, we will create 1000 samples of a population of 500000 people in the US based on [https://www.census.gov/quickfacts/fact/table/US/PST045219](2019 Census data)  regarding racial proportions.  The probability of getting fatally shot regardless of race is 1/315, according to [https://www.businessinsider.com/us-gun-death-murder-risk-statistics-2018-3](Business Insider).
+We will investigate whether the number of people that are fatally shot for a given race in our data is consistent with a population in which each person, regardless of race, is equally likely to be fatally shot. To do this, we will create 1000 samples of a population of 500000 people in the US based on [2019 Census data](https://www.census.gov/quickfacts/fact/table/US/PST045219) regarding racial proportions.  The probability of getting fatally shot regardless of race is 1/315, according to [Business Insider](https://www.businessinsider.com/us-gun-death-murder-risk-statistics-2018-3).
 
 The racial proportions are:
 A Asian 5.9%, 
@@ -221,7 +223,7 @@ mat$total <- apply(mat, 1, sum)
 ```
 The data appears to be normally distributed, indicating that we may use a Student's T-test. We will test the hypothesis that the proportion of fatal shootings for a given race, on average, is equal to the observed proportion of fatal shootings under the assumption that all races are equally likely to be a victim of a fatal shooting.
 ``` {r}
-obs.val <- dat %>% group_by(race) %>% tally
+obs.val <- dat %>% group_by(race) %>% tally()
 race <- 'B'
 mean <- as.integer(obs.val[obs.val$race == race,2])
 t.test(mat$B / mat$total, mu=mean / sum(obs.val$n))
