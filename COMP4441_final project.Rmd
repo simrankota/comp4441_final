@@ -3,10 +3,10 @@ title: "COMP4441_final project"
 author: "Abigail Ward, Simran Kota"
 date: "8/2/2021"
 output:
-  pdf_document: default
+  word_document: default
   html_document:
     df_print: paged
-  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
